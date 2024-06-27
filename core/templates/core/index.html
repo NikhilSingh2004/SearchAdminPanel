@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Home | Food Search
+{% endblock title %}
+
+{% block content %}
+
+{% if sign_log %}
+<div class="container text-center alert alert-success my-5">
+    <h1 class="display-5">Welcome to Food Search</h1>
+</div>
+
+<div class="container my-5">
+    <form method="POST" action="{% url 'home' %}">
+        {% csrf_token %}
+        <div class="input-group">
+            <input type="text" name="query" class="form-control" placeholder="Search for dishes..." required>
+            <div class="input-group-append mx-2">
+                <button class="btn btn-primary" type="submit">Search</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% if query %}
+<div class="container my-5">
+    <h2>Search Results for "{{ query }}"</h2>
+    <div class="table-responsive">
+        <table class="table table-striped table-sm">
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Restaurant Name</th>
+                    <th scope="col">Price (Rupee)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dish in results %}
+                <tr>
+                    <td>{{ dish.name }}</td>
+                    <td>{{ dish.restaurant.name }}</td>
+                    <td>{{ dish.price }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3">No results found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <nav aria-label="Page navigation">
+        <ul class="pagination">
+            {% if results.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="submitPage('{{ results.previous_page_number }}')">Previous</a>
+            </li>
+            {% endif %}
+            {% for num in results.paginator.page_range %}
+            {% if results.number == num %}
+            <li class="page-item active">
+                <a class="page-link" href="#">{{ num }}</a>
+            </li>
+            {% elif num > results.number|add:'-5' and num < results.number|add:'5' %}
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="submitPage('{{ num }}')">{{ num }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+            {% if results.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="submitPage('{{ results.next_page_number }}')">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <form id="pagination-form" method="POST" action="{% url 'home' %}" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" name="query" value="{{ query }}">
+        <input type="hidden" name="page" id="page-input">
+    </form>
+</div>
+
+<script>
+    function submitPage(pageNumber) {
+        document.getElementById('page-input').value = pageNumber;
+        document.getElementById('pagination-form').submit();
+    }
+</script>
+
+{% endif %}
+
+{% else %}
+<div class="container text-center alert alert-success my-5">
+    <h1 class="display-5">You are not authenticated... Please LogIn or SignUp</h1>
+</div>
+{% endif %}
+
+{% endblock content %}
